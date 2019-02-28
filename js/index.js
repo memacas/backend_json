@@ -49,30 +49,58 @@ function playVideoOnScroll(){
 }
 
 inicializarSlider();
-playVideoOnScroll();
+//playVideoOnScroll();
 
 let infoData = {};
 
-function leerArchivo(){
+function leerArchivo(leerParam){
+  filtros = {}
   $.ajax({
-    url: "procesar.php",
+    url: "buscador.php",
     dataType: "json",
-    cache: false,
-    contentType: false,
-    processData: false,
+    data: {'filtros': JSON.stringify(filtros)},
     type: 'post',
     success: (response) => {
       infoData = (response);
+      mostrarResultados();
     },
     error: (response) => {console.log(response)}
   })
 }
 
 function mostrarResultados() {
-  console.log(infoData);
+  //console.log(infoData);
+  $('.resultadoBusqueda').html("");
+  $.each(infoData, (key, propiedad) => {
+    let divPropiedad = `<div class="row card itemMostrado">
+                          <div class="col l4">
+                            foto
+                          </div>
+                          <div class="col l8">
+                            <div class="row">
+                              <div class="col l12">
+                                <div><strong>Dirección: </strong>${propiedad.Direccion}</div>
+                                <div><strong>Ciudad: </strong>${propiedad.Ciudad}</div>
+                                <div><strong>Teléfono: </strong>${propiedad.Telefono}</div>
+                                <div><strong>Código postal: </strong>${propiedad.Codigo_Postal}</div>
+                                <div><strong>Tipo: </strong>${propiedad.Tipo}</div>
+                                <div><strong>Precio: </strong><span class="precioTexto">${propiedad.Precio}</span></div>
+                              </div>
+                            </div>
+                            <div class="row">
+                              <div class="col l12 right-align">
+                                <h5>VER MÁS</h5>
+                              </div>
+                            </div>
+                          </div>
+                        </div>`;
+    $('.resultadoBusqueda').append(divPropiedad);
+    //console.log(divPropiedad);
+    //return false;
+  })
 }
 
 $(document).ready(() => {
-  leerArchivo();
-  console.log(infoData)
+  $('select').formSelect();
+  leerArchivo({});
  });
