@@ -1,60 +1,8 @@
-/*
-  Creación de una función personalizada para jQuery que detecta cuando se detiene el scroll en la página
-*/
-$.fn.scrollEnd = function(callback, timeout) {
-  $(this).scroll(function(){
-    var $this = $(this);
-    if ($this.data('scrollTimeout')) {
-      clearTimeout($this.data('scrollTimeout'));
-    }
-    $this.data('scrollTimeout', setTimeout(callback,timeout));
-  });
-};
-/*
-  Función que inicializa el elemento Slider
-*/
-
-function inicializarSlider(){
-  $("#rangoPrecio").ionRangeSlider({
-    type: "double",
-    grid: false,
-    min: 0,
-    max: 100000,
-    from: 200,
-    to: 80000,
-    prefix: "$"
-  });
-}
-/*
-  Función que reproduce el video de fondo al hacer scroll, y deteiene la reproducción al detener el scroll
-*/
-function playVideoOnScroll(){
-  var ultimoScroll = 0,
-      intervalRewind;
-  var video = document.getElementById('vidFondo');
-  $(window)
-    .scroll((event)=>{
-      var scrollActual = $(window).scrollTop();
-      if (scrollActual > ultimoScroll){
-       //video.play();
-     } else {
-        //this.rewind(1.0, video, intervalRewind);
-        video.play();
-     }
-     ultimoScroll = scrollActual;
-    })
-    .scrollEnd(()=>{
-      video.pause();
-    }, 10)
-}
-
-inicializarSlider();
-playVideoOnScroll();
-
 let infoData = {};
 
 function leerArchivo(leerParam){
-  filtros = {}
+  //Inicializa los filtros
+  filtros = leerParam
   $.ajax({
     url: "buscador.php",
     dataType: "json",
@@ -63,9 +11,7 @@ function leerArchivo(leerParam){
     cache: false,
     success: (response) => {
       infoData = (response);
-      //console.log("que pasa");
-      //console.log("ok");
-      //console.log(infoData);
+      //Muestra el listado de propiedades que retorno con los filtros ya aplicados
       mostrarResultados();
     },
     error: (response) => {console.log(response)}
@@ -73,37 +19,46 @@ function leerArchivo(leerParam){
 }
 
 function mostrarResultados() {
-  //console.log(infoData);
+  //Elimina los resultados previos
   $('.resultadoBusqueda').html("");
 
-  //$('#selectCiudad').append('<option value="sad">algo</option>');
-  //$('form').find('select[id="selectCiudad"]').append('<option value="">sf<sf/option>')
+  //Limpia los listados de filtros
   $('#selectCiudad option').slice(1).remove();
   $('#selectTipo option').slice(1).remove();
-
   $('select').material_select();
 
+  //Se crean los filtros de ciudad y tipo
   $.each(infoData['listado_ciudades'], (key, ciudad) => {$('#selectCiudad').append(`<option value="${ciudad}">${ciudad}</option>`);});
+  try{
+      $('#selectCiudad').val(infoData['filtros']['ciudadSeleccionada']);
+  }
+  catch{
+    $('#selectCiudad').val("");
+  }
 
   $.each(infoData['listado_tipo'], (key, tipo) => {$('#selectTipo').append(`<option value="${tipo}">${tipo}</option>`);});
+  try{
+      $('#selectTipo').val(infoData['filtros']['tipoSeleccionado']);
+  }
+  catch{
+    $('#selectTipo').val("");
+  }
 
   $('select').material_select();
 
+  //Se actualizan precios del filtro de busqueda
   $("#rangoPrecio").data("ionRangeSlider").update({
     min: 0,
     max: infoData['precios']['max'],
-    from: infoData['precios']['min'],
-    to: infoData['precios']['max']
+    from: infoData['filtros']['precioMinSeleccionado'],
+    to: infoData['filtros']['precioMaxSeleccionado']
   })
 
-  //$('#selectCiudad option').slice(1).remove();
-
-//$('span').slice(1).remove();
-
+  //Se recorren las propiedades para mostrarlas
   $.each(infoData['listado_propiedades'], (key, propiedad) => {
     let divPropiedad = `<div class="row card itemMostrado">
                           <div class="col l4">
-                            foto
+                            <img src="img/home.jpg">
                           </div>
                           <div class="col l8">
                             <div class="row">
@@ -118,25 +73,33 @@ function mostrarResultados() {
                             </div>
                             <div class="row">
                               <div class="col l12 right-align">
-                                <h5>VER MÁS</h5>
+                                <h5><a href="">VER MÁS</a></h5>
                               </div>
                             </div>
                           </div>
                         </div>`;
     $('.resultadoBusqueda').append(divPropiedad);
-    //console.log(divPropiedad);
-    //return false;
   })
 }
 
 $(document).ready(() => {
+  //Carga el listado por defecto
+  leerArchivo({});
 
-  $('#submitButton').submit(()=>{
+  $("#mostrarTodos").click((e)=>{
     e.preventDefault();
     leerArchivo({});
   })
 
-  $('form').find('select[id="selectCiudad"]').change(function(){
-    //alert($(this).val())
-  });
+  $("#submitButton").click((e)=>{
+    e.preventDefault();
+    let parametros = {};
+    //Inicializa parametros para buscar propiedades con filtros
+    if ($('#selectCiudad').val() != null) parametros['ciudad'] = $('#selectCiudad').val();
+    if ($('#selectTipo').val() != null) parametros['tipo'] = $('#selectTipo').val();
+    parametros['precioMin'] = $("#rangoPrecio").data("from");
+    parametros['precioMax'] = $("#rangoPrecio").data("to");
+    leerArchivo(parametros);
+  })
+
  });

@@ -133,7 +133,7 @@ video#vidFondo {
   flex-flow: row wrap;
 }
 .itemMostrado img{
-  width: 35% !important;
+  width: 100% !important;
 }
 .precioTexto{
   font-size: 1.3rem;
